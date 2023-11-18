@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import validator from 'validator';
 import {
   Guardian,
   LocalGuardian,
@@ -11,8 +12,11 @@ const userNameSchema = new Schema<UserName>({
   firstName: {
     type: String,
     trim: true,
+    // build in validation ------------------------
     required: [true, 'First name is required'],
     maxlength: [20, 'First name can not be more then 20 character'],
+
+    // costume validation ------------------------
     validate: {
       validator: function (value: string) {
         const capitalizedString =
@@ -26,7 +30,12 @@ const userNameSchema = new Schema<UserName>({
   lastName: {
     type: String,
     required: [true, 'Last name is required'],
-    trim: true,
+    // trim: true,
+    // validation with validator package : validator -----------
+    validate: {
+      validator: (value: string) => validator.isAlpha(value),
+      message: '{VALUE} is not valid format',
+    },
   },
 });
 
@@ -94,7 +103,16 @@ const studentSchema = new Schema<Student>({
     required: [true, 'Gender is required'],
   },
   dateOfBirth: { type: String },
-  email: { type: String, required: [true, 'Email is required'], unique: true },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    unique: true,
+    // validation with validator package : validator -----------
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: '{VALUE} is not valid email',
+    },
+  },
   contactNo: { type: String, required: [true, 'Contact number is required'] },
   emergencyContactNo: {
     type: String,
