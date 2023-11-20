@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import validator from 'validator';
+import bcrypt from 'bcrypt';
 import {
   StudentModel,
   TGuardian,
@@ -9,6 +10,7 @@ import {
   TUserName,
   // studentMethods,
 } from './student.interface';
+import config from '../../config';
 
 // schema for username
 const userNameSchema = new Schema<TUserName>({
@@ -95,7 +97,13 @@ const localGuardianSchema = new Schema<TLocalGuardian>({
 //const studentSchema = new Schema<TStudent, StudentModel, studentMethods>({
 //for static method-------------------------------
 const studentSchema = new Schema<TStudent, StudentModel>({
-  id: { type: String, required: true, unique: true },
+  id: { type: String, required: [true, 'Id is required'], unique: true },
+  password: {
+    type: String,
+    required: true,
+    unique: true,
+    maxlength: [20, 'Password can not be more then 20 character'],
+  },
   name: {
     type: userNameSchema,
     required: [true, 'Name is required'],
@@ -154,6 +162,25 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     enum: ['active', 'blocked'],
     default: 'active',
   },
+});
+
+// pre save middleware / hook : will work on create() or save() -------------------
+
+studentSchema.pre('save', async function (next) {
+  // console.log(this, 'pre hook: we will save the data');
+  // hashing password and save into db ---------
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
+  const user = this;
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds),
+  );
+  next();
+});
+
+// post save middleware / hook : will work on create() or save() ---------------------
+studentSchema.post('save', function () {
+  console.log(this, 'post hook : we saved our  data');
 });
 
 // ---------creating a costume static method -------------------------
